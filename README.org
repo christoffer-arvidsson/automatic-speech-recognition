@@ -1,0 +1,7 @@
+* Automatic speech recognition
+
+This is a tensorflow implementation of an automatic speech recognition
+(ASR) system. The model uses spectrograms and transformers to predict
+characters that occur in sound.
+
+The dataset used here is Mozilla Common voice (swedish).
