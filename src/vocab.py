@@ -40,7 +40,12 @@ class Vocab:
         return padded
 
     def decode_tokens(self, tokens):
-        decoded = "".join([self.itos[c] for c in tokens])
+        decoded = ""
+        for c in tokens:
+            decoded += self.itos[c]
+
+            if c == self.itos[self.EOS]:
+                break
 
         return decoded
 

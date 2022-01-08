@@ -95,7 +95,7 @@ class EndToEnd(tf.keras.Model):
         self.loss_metric.update_state(loss)
         return {"loss": self.loss_metric.result()}
 
-    def translate(self, source, steps, bos_idx):
+    def translate(self, source, max_steps, bos_idx):
         """Perform ASR on batched spectrograms by greedily
         predicting one token at a time using previous predictions."""
         batch_size = source.shape[0]
@@ -109,7 +109,7 @@ class EndToEnd(tf.keras.Model):
 
         encoded = self.sequence_encoder(x, False, enc_padding_mask)
         dec_logits = []
-        for i in range(steps):
+        for i in range(max_steps):
             decoded, _ = self.sequence_decoder(dec_inputs, encoded, False, dec_padding_mask)
             logits = self.classifier(decoded)
             logits = tf.argmax(logits, axis=-1, output_type=tf.int32)
