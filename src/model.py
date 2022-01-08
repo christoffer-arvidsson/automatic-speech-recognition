@@ -40,6 +40,7 @@ class EndToEnd(tf.keras.Model):
         return features
 
 
+    @tf.function
     def call(self, inputs, training):
         # Inputs consists of spectrograms, and the target sentence as integer encoded tokens
         inp, tar = inputs
@@ -57,8 +58,8 @@ class EndToEnd(tf.keras.Model):
 
         return pred
 
+    @tf.function
     def train_step(self, batch):
-        """Processes one batch inside model.fit()."""
         source, target = batch
 
         dec_input = target[:, :-1]
@@ -80,6 +81,18 @@ class EndToEnd(tf.keras.Model):
         self.optimizer.apply_gradients(zip(gradients, trainable_vars))
         self.loss_metric.update_state(loss)
 
+        return {"loss": self.loss_metric.result()}
+
+    @tf.function
+    def test_step(self, batch):
+        source, target = batch
+        dec_input = target[:, :-1]
+        dec_target = target[:, 1:]
+        preds = self([source, dec_input])
+        one_hot = tf.one_hot(dec_target, depth=self.target_vocab_size)
+        mask = tf.math.logical_not(tf.math.equal(dec_target, 1))
+        loss = self.compiled_loss(one_hot, preds, sample_weight=mask)
+        self.loss_metric.update_state(loss)
         return {"loss": self.loss_metric.result()}
 
     def translate(self, source, steps, bos_idx):
@@ -279,6 +292,7 @@ class CreatePatches(layers.Layer):
         super().__init__()
         self.patch_width = patch_width
 
+    @tf.function
     def call(self, images):
         batch_size = tf.shape(images)[0]
         patch_height = images.shape[2]

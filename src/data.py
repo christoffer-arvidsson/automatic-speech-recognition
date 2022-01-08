@@ -35,7 +35,7 @@ def apply_spectrogram(signal):
 
 def apply_log_mel_spec(signal):
     w = tf.signal.linear_to_mel_weight_matrix(
-        num_mel_bins=100, num_spectrogram_bins=257, sample_rate=32000)
+        num_mel_bins=100, num_spectrogram_bins=257, sample_rate=16000)
     return tf.math.log(tf.matmul(signal, w) + 1e-6)
 
 def apply_mfcc(log_mel_spec):
@@ -57,17 +57,21 @@ def apply_normalization(spec):
     means = tf.math.reduce_mean(spec, 1, keepdims=True)
     stddevs = tf.math.reduce_std(spec, 1, keepdims=True)
     return (spec - means) / stddevs
-    
+
+def preprocess_pipeline(x, y):
+    outx = apply_trim(x)
+    outx = apply_preemphasis_filter(outx)
+    outx = apply_pad(outx, 100000)
+    outx = apply_spectrogram(outx)
+    outx = apply_log_mel_spec(outx)
+
+    return outx, y
+
 def preprocess_dataset(dataset):
     """Pipeline for preprocessing the dataset of signals and word encodings."""
+    
     new = (dataset
-           .map(map_func=lambda x,y: (apply_trim(x), y))
-           .map(map_func=lambda x,y: (apply_preemphasis_filter(x), y))
-           .map(map_func=lambda x,y: (apply_pad(x, 100000), y))
-           .map(map_func=lambda x,y: (apply_spectrogram(x), y))
-           .map(map_func=lambda x,y: (apply_log_mel_spec(x), y))
-           # .map(map_func=lambda x,y: (apply_mfcc(x), y))
-           )
+           .map(map_func=lambda x,y: preprocess_pipeline(x, y), num_parallel_calls=tf.data.AUTOTUNE))
 
     return new
     
@@ -75,8 +79,11 @@ def create_dataset(metadata, vocab=None, base_dir=""):
     """Create a dataset from a metadata pandas frame. If vocab is not supplied, build a new vocabulary."""
     # Encode target sentences into word labels
     sentences = metadata.sentence
-    vocab = Vocab()
-    vocab.build(sentences)
+
+    # Build new vocab
+    if not vocab:
+        vocab = Vocab()
+        vocab.build(sentences)
 
     labels = vocab.encode_docs(sentences)
 
@@ -87,3 +94,12 @@ def create_dataset(metadata, vocab=None, base_dir=""):
 
     return pre_dataset, vocab
 
+def split_train_validation(dataset, train_ratio=0.9):
+    """Split dataset for holdout validation."""
+    dataset_size = int(tf.data.experimental.cardinality(dataset))
+    val_size = int(dataset_size * 1 - train_ratio)
+    train_size = int(dataset_size * train_ratio)
+
+    train_dataset = dataset.take(train_size)
+    val_dataset = dataset.skip(train_size)
+    return train_dataset, val_dataset

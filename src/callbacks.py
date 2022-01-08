@@ -6,7 +6,7 @@ class DisplaySentence(keras.callbacks.Callback):
         """Displays a batch of outputs after every epoch
 
         Args:
-            batch: A test batch containing the keys "source" and "target"
+            batch: A test batch containing a tuple of "source" and "target"
             vocab: A vocabulary
         """
         self.batch = batch
@@ -25,3 +25,14 @@ class DisplaySentence(keras.callbacks.Callback):
             prediction = self.vocab.decode_tokens(preds[i])
             print(f"target:     {target_text}")
             print(f"prediction: {prediction}\n")
+
+
+def checkpoint_cb(path):
+    model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
+        filepath=path,
+        save_weights_only=True,
+        monitor='val_loss',
+        mode='min',
+        save_best_only=True)
+
+    return model_checkpoint_callback
