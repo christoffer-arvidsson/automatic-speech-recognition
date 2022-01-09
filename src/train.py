@@ -5,7 +5,7 @@ from tensorflow import keras
 import tensorflow_io as tfio
 import matplotlib.pyplot as plt
 
-from data import create_dataset, split_train_validation
+from data import create_dataset
 from model import EndToEnd
 from callbacks import DisplaySentence, checkpoint_cb
 

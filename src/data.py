@@ -93,13 +93,3 @@ def create_dataset(metadata, vocab=None, base_dir=""):
     pre_dataset = preprocess_dataset(dataset).shuffle(1024)
 
     return pre_dataset, vocab
-
-def split_train_validation(dataset, train_ratio=0.9):
-    """Split dataset for holdout validation."""
-    dataset_size = int(tf.data.experimental.cardinality(dataset))
-    val_size = int(dataset_size * 1 - train_ratio)
-    train_size = int(dataset_size * train_ratio)
-
-    train_dataset = dataset.take(train_size)
-    val_dataset = dataset.skip(train_size)
-    return train_dataset, val_dataset
