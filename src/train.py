@@ -26,7 +26,7 @@ batch_size = 64
 lr = 2e-4
 patience = 10
 patch_width = 32
-model = EndToEnd(patch_width, 128)
+model = EndToEnd(patch_width, vocab.size)
 
 optimizer = keras.optimizers.Adam(learning_rate=lr)
 loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.1),
@@ -54,11 +54,10 @@ model.compile(
 # Load checkpoin
 # model.load_weights(checkpoint_filepath)
 
-# Make sure to adapt the vectorizer to the text corpus
 history = model.fit(
     train_dataset,
     validation_data = val_dataset,
     epochs=100,
-    callbacks=[disp_callback, early_stopping, checkpoint_cb],
+    callbacks=[disp_callback, early_stopping],
 )
 

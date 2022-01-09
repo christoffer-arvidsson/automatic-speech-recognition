@@ -15,6 +15,10 @@ class Vocab:
         # return sentence.split(" ")
         return list(sentence)
 
+    @property
+    def size(self):
+        return len(self.itos)
+
     def build(self, sentences):
         lower = [s.lower() for s in sentences]
         tokens = [self.tokenize(s) for s in lower]
@@ -44,8 +48,11 @@ class Vocab:
         for c in tokens:
             decoded += self.itos[c]
 
-            if c == self.itos[self.EOS]:
+            if self.itos[c] is self.EOS:
                 break
 
         return decoded
+
+    def decode_docs(self, docs):
+        return [self.decode_tokens(d) for d in docs]
 
