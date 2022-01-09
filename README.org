@@ -1,7 +1,5 @@
 #+title: Automatic speech recognition of swedish text
-#+cite_export: csl
 
-* Automatic speech recognition
 This is a tensorflow implementation of an automatic speech recognition
 (ASR) system. The model uses spectrograms and transformers to predict
 characters that occur in sound.
@@ -9,10 +7,10 @@ characters that occur in sound.
 The dataset used here is [[https://commonvoice.mozilla.org/en/datasets][Mozilla Common voice (swedish)]].
 
 ** Model description
-The model is based on the attention is all you need
-tranformer[cite:@vaswani2017attention], with added spectrogram
-generation. Spectrograms are split into patches along the time
-dimension before being encoded via a convolutional model.
+The model is based on the attention is all you need tranformer, with
+added spectrogram generation. Spectrograms are split into patches
+along the time dimension before being encoded via a convolutional
+model.
 
 The transformer is tasked with predicting characters from the input
 sequence of encoded patches. Predicting characters rather than words
@@ -72,7 +70,3 @@ prediction: <låt dem veta att vi var efter på som våra taga pågår.>>.>>.>>.
 target:     <jag ska lära sig att hålla dig tyst, när jag vill sova.>_________________________________________________________
 prediction: <jag ska lära sig att hålla dig tyst, när jag vill sovda.>>.>>.>>.>>.>>.>.>>.>>.>.>>.>>.>.>.>>>.>.>.>>>>>>>>>>>>>>>>>>>>f.>>>>>>>>>>>sssssssss.>.>.>.>.>.>>>s
 #+end_src
-
-
-* References
-#+print_bibliography: 
