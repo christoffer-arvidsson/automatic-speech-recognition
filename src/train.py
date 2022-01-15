@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow import keras
 import tensorflow_io as tfio
 import matplotlib.pyplot as plt
+import json
 
 from data import create_dataset
 from model import EndToEnd
@@ -61,3 +62,7 @@ history = model.fit(
     callbacks=[disp_callback, early_stopping],
 )
 
+# Get the dictionary containing each metric and the loss for each epoch
+history_dict = history.history
+# Save it under the form of a json file
+json.dump(history_dict, open("history.json", 'w'))
