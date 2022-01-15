@@ -23,7 +23,7 @@ def apply_preemphasis_filter(signal):
     """Amplify high frequencies to balance magnitudes of higher
     frequencies and improve signal to noise ratio."""
     pre_emphasis = 0.97
-    emph_signal = tf.concat([signal[:1], signal[1:] - pre_emphasis * signal[:-1]], 0)
+    emph_signal = tf.concat([signal[:1], signal[:1] - pre_emphasis * signal[:-1]], 0)
 
     return emph_signal
 
