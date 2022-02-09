@@ -21,7 +21,7 @@ well.
 If you for some reason want to run the model, then first download the
 checkpoint under releases, and place it as
 =checkpoint/nlp_transformer=. Then download the Mozilla Common Voice
-(swedish) dataset. This project was trained on version 2021-07-21. The
+(swedish) dataset. This project was trained on version 7 (sv-SE_45h_2021-07-21). The
 dataset should be located in =datasets/sv-SE=. Alternatively edit the
 paths in =train.py= and =evaluate.py= to suit your needs.
 
