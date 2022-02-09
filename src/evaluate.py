@@ -13,12 +13,11 @@ from jiwer import cer, wer
 batch_size = 64
 patch_width = 32
 lr = 2e-4
+checkpoint_filepath = '../checkpoint/nlp_transformer/'
 train_metadata_path = '../dataset/sv-SE/validated.tsv'
 test_metadata_path = '../dataset/sv-SE/test.tsv'
 train_metadata = pd.read_csv(train_metadata_path, sep='\t')
 test_metadata = pd.read_csv(test_metadata_path, sep='\t')
-# test_metadata = test_metadata[test_metadata["gender"] == "male"]
-print(len(test_metadata))
 
 train_dataset, vocab = create_dataset(train_metadata, base_dir="../dataset/sv-SE/clips/new/")
 test_dataset, _ = create_dataset(test_metadata, base_dir="../dataset/sv-SE/clips/new/", vocab=vocab)
@@ -31,7 +30,6 @@ optimizer = keras.optimizers.Adam(learning_rate=lr)
 loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.1),
 
 # Load checkpoint
-checkpoint_filepath = '/mnt/media/checkpoint/nlp_transformer/'
 checkpoint_cb = checkpoint_cb(checkpoint_filepath)
 
 model.compile(

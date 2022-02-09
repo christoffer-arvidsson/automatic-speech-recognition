@@ -7,7 +7,7 @@ characters that occur in sound.
 The dataset used here is [[https://commonvoice.mozilla.org/en/datasets][Mozilla Common voice (swedish)]].
 
 ** Model description
-The model is based on the attention is all you need tranformer, with
+The model is based on the /attention is all you need/ transformer, with
 added spectrogram generation. Spectrograms are split into patches
 along the time dimension before being encoded via a convolutional
 model.
@@ -17,56 +17,93 @@ sequence of encoded patches. Predicting characters rather than words
 allow a smaller vocabulary and suits the speech recognition task quite
 well.
 
+** Usage
+If you for some reason want to run the model, then first download the
+checkpoint under releases, and place it as
+=checkpoint/nlp_transformer=. Then download the Mozilla Common Voice
+(swedish) dataset. This project was trained on version 2021-07-21. The
+dataset should be located in =datasets/sv-SE=. Alternatively edit the
+paths in =train.py= and =evaluate.py= to suit your needs.
+
+To train, 
+#+begin_src sh
+python train.py
+#+end_src
+
+To evaluate, run
+#+begin_src sh
+python evaluate.py
+#+end_src
+
 ** Example results
-In these examples, =_= denotes padding, =<= beginning-of-sentence and =>=
+The model achieves a /character-error-rate/ of 0.2477, and a
+/word-error-rate/ of 0.3699. This are because of use of greedy decoding,
+which often messes up the prediction for long sentences (see failure
+cases below).
+
+In these examples, =<= marks beginning-of-sentence and =>=
 end-of-sentence. The target string is the true spoken sentence for a
 certain voice clip.
 
-Since the loss is masked out for padding characters, the model fills
-the tokens after the first =>= with random characters.
-
 Epoch 1
 #+begin_src text
-target:     <vi kan resa dit och gifta oss.>__________________________________________________________________________________
-prediction: <det är skar det skon skon det det den det ska skon.>.>.>.>len.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>een.>r.haraenhen>h>>>>>g n   .>.>.>.>.>e.>.
+target:     <vi kan resa dit och gifta oss.>
+prediction: <det är skar det skon skon det det den det ska skon.>
 
-target:     <även jag läste den och fick tillåtelse att göra illustrationer på de breda marginalerna.>________________________
-prediction: <det är skar som ston sten som skon skom sten ska skan skon skom skomen.>len.>.>.>.>.>.>en.>.>.>.>.>erer.>.>.>a.>eshenteröraaemhih>hh>>>>g>g c> >  e e e e > 
+target:     <även jag läste den och fick tillåtelse att göra illustrationer på de breda marginalerna.>
+prediction: <det är skar som ston sten som skon skom sten ska skan skon skom skomen.>
 
-target:     <låt dem veta att vi vet vad som pågår.>__________________________________________________________________________
-prediction: <det är skar star sten som soch skar den sta ska skan som skom somen.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>eeeen.>röraranhehen>h>>>>g c>  >.>.>.>.>e.>e.
+target:     <låt dem veta att vi vet vad som pågår.>
+prediction: <det är skar star sten som soch skar den sta ska skan som skom somen.>
 
-target:     <jag ska lära sig att hålla dig tyst, när jag vill sova.>_________________________________________________________
-prediction: <det är skar det skon skon den skan den den ska skon.>.>.>llen.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>een.>r.haraenhen>h>>>>>g n   .>.>.>.>.>e.>.
+target:     <jag ska lära sig att hålla dig tyst, när jag vill sova.>
+prediction: <det är skar det skon skon den skan den den ska skon.>.>.>llen.>
 #+end_src
 
 
 Epoch 20
 #+begin_src text
-target:     <vi kan resa dit och gifta oss.>__________________________________________________________________________________
-prediction: <vi kan resa i vildsaken.>>.>.>>.>.>.>.>.>.>.>.>.>.>elt.>>nås.>>en.>>orenssarnen.>>>aren.>>.>>or.>>>>>.>s>nnnns>>>>>>>nnnnnns>>>>>>>>>nnnnnsssssssssseeeeers>
+target:     <vi kan resa dit och gifta oss.>
+prediction: <vi kan resa i vildsaken.>
 
-target:     <även jag läste den och fick tillåtelse att göra illustrationer på de breda marginalerna.>________________________
-prediction: <än lade med den och kompenterat att tillämpsamman och resade de till brodsädelar.>ena.>.>.>.>.>.>.>.>.>.>.>na.>e.>a.>.>.>.>eneneeee.>en.>.....>.>.>...ee.>.>
+target:     <även jag läste den och fick tillåtelse att göra illustrationer på de breda marginalerna.>
+prediction: <än lade med den och kompenterat att tillämpsamman och resade de till brodsädelar.>
 
-target:     <låt dem veta att vi vet vad som pågår.>__________________________________________________________________________
-prediction: <under var det en blick repontionen och såg på honom.>>.>>.>>.>>.>>t.>>t.>>.>>t.>>.>>.>>.>>.>>>.>.>.>.>.>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.>.>sss.>.>.>.>.>.>.>>>
+target:     <låt dem veta att vi vet vad som pågår.>
+prediction: <under var det en blick repontionen och såg på honom.>
 
-target:     <jag ska lära sig att hålla dig tyst, när jag vill sova.>_________________________________________________________
-prediction: <jag ska göra dit låna gå till stora.>>.>>.>>.>>.>>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>.>>>>>.>>>>>>>>>>>.>.>.>.....>.>.s...>.>.>
+target:     <jag ska lära sig att hålla dig tyst, när jag vill sova.>
+prediction: <jag ska göra dit låna gå till stora.>
 #+end_src
 
 Epoch 45
 #+begin_src text
-target:     <vi kan resa dit och gifta oss.>__________________________________________________________________________________
-prediction: <vi kan resa dit och gifta oss.>>.>>.>>näst.>>.>>.>>>våset.>>.>>g.>>g.>>g.>>.>n.>n.>>.>.>.>.>n.>>.>>.>>.>>>>>>>>>>>>>>ng.>.>>>>>>>>>>>>>>>>>.>.>.>.>.>.>r.>>n
+target:     <vi kan resa dit och gifta oss.>
+prediction: <vi kan resa dit och gifta oss.>
 
-target:     <även jag läste den och fick tillåtelse att göra illustrationer på de breda marginalerna.>________________________
-prediction: <även jag läste den och fick tillåtelse att göra illustrationer på de breda margilen.>.>.>.>ernan.>.>.>>>>>>>>>>>>>>>>>>ena.>>>>>>>>>>>.>.>.>ganana.> .>.>>.>
+target:     <även jag läste den och fick tillåtelse att göra illustrationer på de breda marginalerna.>
+prediction: <även jag läste den och fick tillåtelse att göra illustrationer på de breda margilen.>
 
-target:     <låt dem veta att vi vet vad som pågår.>__________________________________________________________________________
-prediction: <låt dem veta att vi var efter på som våra taga pågår.>>.>>.>>.>>.>>.>>.>>.>>.>.>.>>.>.>.>.>.>>>.>.>>.>>>>>>>>.>.>>>>>>>>>>>>>>>>>>>>>>.>.>s.>.>.>.>.>.>.>>ng
+target:     <låt dem veta att vi vet vad som pågår.>
+prediction: <låt dem veta att vi var efter på som våra taga pågår.>
 
-target:     <jag ska lära sig att hålla dig tyst, när jag vill sova.>_________________________________________________________
-prediction: <jag ska lära sig att hålla dig tyst, när jag vill sovda.>>.>>.>>.>>.>>.>.>>.>>.>.>>.>>.>.>.>>>.>.>.>>>>>>>>>>>>>>>>>>>>f.>>>>>>>>>>>sssssssss.>.>.>.>.>.>>>s
+target:     <jag ska lära sig att hålla dig tyst, när jag vill sova.>
+prediction: <jag ska lära sig att hålla dig tyst, när jag vill sovda.>
 #+end_src
+
+Some failure cases
+#+begin_src text
+target:     <jo, samhällets omläggning att passa modern och barnen.>
+prediction: <jo, sa han hålligt den planeratal om då något annes.>
+            
+target:     <ja, det var en italienare, han kallades för doktor.>
+prediction: <ja, det var en itamarieterar han ett sorg.>
+            
+target:     <låt oss inte förbättra deras liv.>
+prediction: <låt oss inte förstört.>
+#+end_src
+
+
+
+
+
