@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 
+
 class DisplaySentence(keras.callbacks.Callback):
     def __init__(self, batch, vocab):
         """Displays a batch of outputs after every epoch
@@ -31,8 +32,9 @@ def checkpoint_cb(path):
     model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
         filepath=path,
         save_weights_only=True,
-        monitor='val_loss',
-        mode='min',
-        save_best_only=True)
+        monitor="val_loss",
+        mode="min",
+        save_best_only=True,
+    )
 
     return model_checkpoint_callback

@@ -1,10 +1,11 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
+
 class EndToEnd(tf.keras.Model):
     def __init__(self, patch_width, target_vocab_size):
         super().__init__()
-        self.patch_width =  patch_width
+        self.patch_width = patch_width
         self.target_vocab_size = target_vocab_size
 
         # Layers
@@ -13,7 +14,9 @@ class EndToEnd(tf.keras.Model):
 
         self.pos_embedding = RelativePositionEmbedding(176)
         self.sequence_encoder = TransformerEncoder(8, 8, 176, 4)
-        self.sequence_decoder = TransformerDecoder(8, 8, 176, 128, self.target_vocab_size)
+        self.sequence_decoder = TransformerDecoder(
+            8, 8, 176, 128, self.target_vocab_size
+        )
         self.classifier = layers.Dense(target_vocab_size)
 
         # Loss
@@ -39,7 +42,6 @@ class EndToEnd(tf.keras.Model):
 
         return features
 
-
     @tf.function
     def call(self, inputs, training):
         # Inputs consists of spectrograms, and the target sentence as integer encoded tokens
@@ -52,7 +54,9 @@ class EndToEnd(tf.keras.Model):
         dec_padding_mask = self.pad_mask(features, tar)
 
         encoded = self.sequence_encoder(features, training, enc_padding_mask)
-        decoded, attention_weights = self.sequence_decoder(tar, encoded, training, dec_padding_mask)
+        decoded, attention_weights = self.sequence_decoder(
+            tar, encoded, training, dec_padding_mask
+        )
 
         pred = self.classifier(decoded)
 
@@ -110,7 +114,9 @@ class EndToEnd(tf.keras.Model):
         encoded = self.sequence_encoder(x, False, enc_padding_mask)
         dec_logits = []
         for i in range(max_steps):
-            decoded, _ = self.sequence_decoder(dec_inputs, encoded, False, dec_padding_mask)
+            decoded, _ = self.sequence_decoder(
+                dec_inputs, encoded, False, dec_padding_mask
+            )
             logits = self.classifier(decoded)
             logits = tf.argmax(logits, axis=-1, output_type=tf.int32)
             last_logit = tf.expand_dims(logits[:, -1], axis=-1)
@@ -118,6 +124,7 @@ class EndToEnd(tf.keras.Model):
             dec_inputs = tf.concat([dec_inputs, last_logit], axis=-1)
 
         return dec_inputs
+
 
 class TransformerEncoder(layers.Layer):
     def __init__(self, n_blocks, n_heads, d_model, ff_dim, dropout_rate=0.1):
@@ -129,8 +136,12 @@ class TransformerEncoder(layers.Layer):
         self.dropout_rate = dropout_rate
 
         self.pos_embedding = RelativePositionEmbedding(self.d_model)
-        self.enc_blocks = [TransformerEncoderBlock(self.d_model, self.n_heads, self.ff_dim, self.dropout_rate)
-                           for _ in range(self.n_blocks)]
+        self.enc_blocks = [
+            TransformerEncoderBlock(
+                self.d_model, self.n_heads, self.ff_dim, self.dropout_rate
+            )
+            for _ in range(self.n_blocks)
+        ]
 
         self.dropout = layers.Dropout(self.dropout_rate)
 
@@ -145,8 +156,11 @@ class TransformerEncoder(layers.Layer):
 
         return x
 
+
 class TransformerDecoder(layers.Layer):
-    def __init__(self, n_blocks, n_heads, d_model, ff_dim, target_vocab_size, dropout_rate=0.1):
+    def __init__(
+        self, n_blocks, n_heads, d_model, ff_dim, target_vocab_size, dropout_rate=0.1
+    ):
         super().__init__()
         self.n_blocks = n_blocks
         self.d_model = d_model
@@ -157,8 +171,10 @@ class TransformerDecoder(layers.Layer):
         self.embedding = layers.Embedding(target_vocab_size, self.d_model)
         self.pos_embedding = RelativePositionEmbedding(self.d_model)
 
-        self.dec_blocks = [TransformerDecoderBlock(self.d_model, self.n_heads, self.ff_dim)
-                           for _ in range(self.n_blocks)]
+        self.dec_blocks = [
+            TransformerDecoderBlock(self.d_model, self.n_heads, self.ff_dim)
+            for _ in range(self.n_blocks)
+        ]
 
         self.dropout = layers.Dropout(self.dropout_rate)
 
@@ -168,8 +184,9 @@ class TransformerDecoder(layers.Layer):
         m = i >= j - n_src + n_dest
         mask = tf.cast(m, dtype)
         mask = tf.reshape(mask, [1, n_dest, n_src])
-        mult = tf.concat([tf.expand_dims(batch_size, -1),
-                          tf.constant([1,1], dtype=tf.int32)], 0)
+        mult = tf.concat(
+            [tf.expand_dims(batch_size, -1), tf.constant([1, 1], dtype=tf.int32)], 0
+        )
         out = tf.tile(mask, mult)
 
         return out
@@ -178,8 +195,10 @@ class TransformerDecoder(layers.Layer):
         batch_size = enc_output.shape[0]
         src_seq_len = enc_output.shape[1]
         dest_seq_len = tar.shape[1]
-        
-        lookahead_mask = self.lookahead_mask(batch_size, dest_seq_len, dest_seq_len, tf.bool)
+
+        lookahead_mask = self.lookahead_mask(
+            batch_size, dest_seq_len, dest_seq_len, tf.bool
+        )
 
         attention_weights = {}
 
@@ -191,15 +210,19 @@ class TransformerDecoder(layers.Layer):
         x = self.dropout(emb_tar, training=training)
 
         for i, block in enumerate(self.dec_blocks):
-            x, block1, block2 = block(x, enc_output, lookahead_mask, padding_mask, training)
+            x, block1, block2 = block(
+                x, enc_output, lookahead_mask, padding_mask, training
+            )
 
-            attention_weights[f'decoder_layer{i+1}_block1'] = block1
-            attention_weights[f'decoder_layer{i+1}_block2'] = block2
+            attention_weights[f"decoder_layer{i+1}_block1"] = block1
+            attention_weights[f"decoder_layer{i+1}_block2"] = block2
 
         return x, attention_weights
 
+
 class TransformerEncoderBlock(layers.Layer):
     """Encoder block with masked multihead attention and the normalization, dropout layers."""
+
     def __init__(self, d_model, n_heads, ff_dim, dropout=0.1, **kwargs):
         super().__init__()
         self.d_model = d_model
@@ -210,33 +233,43 @@ class TransformerEncoderBlock(layers.Layer):
     @staticmethod
     def point_wise_feed_forward_network(d_model, dff):
         """Simple feed forward network."""
-        return tf.keras.Sequential([
-            layers.Dense(dff, activation='relu'),  # (batch_size, seq_len, dff)
-            layers.Dense(d_model)  # (batch_size, seq_len, d_model)
-        ])
+        return tf.keras.Sequential(
+            [
+                layers.Dense(dff, activation="relu"),  # (batch_size, seq_len, dff)
+                layers.Dense(d_model),  # (batch_size, seq_len, d_model)
+            ]
+        )
 
     def build(self, input_shape):
-        self.attn_multi = layers.MultiHeadAttention(self.n_heads, self.d_model, dropout=self.dropout_rate)
+        self.attn_multi = layers.MultiHeadAttention(
+            self.n_heads, self.d_model, dropout=self.dropout_rate
+        )
         self.attn_dropout = layers.Dropout(self.dropout_rate)
-        self.attn_normalize = layers.LayerNormalization(input_shape=input_shape, epsilon=1e-6)
+        self.attn_normalize = layers.LayerNormalization(
+            input_shape=input_shape, epsilon=1e-6
+        )
 
         self.ffn = self.point_wise_feed_forward_network(self.d_model, self.ff_dim)
         self.ff_dropout = layers.Dropout(self.dropout_rate)
-        self.ff_normalize = layers.LayerNormalization(input_shape=input_shape, epsilon=1e-6)
+        self.ff_normalize = layers.LayerNormalization(
+            input_shape=input_shape, epsilon=1e-6
+        )
 
-    def call(self, x, training, mask): 
-        attn_layer = self.attn_multi(x,x,x, mask, training=training)
+    def call(self, x, training, mask):
+        attn_layer = self.attn_multi(x, x, x, mask, training=training)
         attn_layer = self.attn_dropout(attn_layer, training=training)
         out1 = self.attn_normalize(x + attn_layer)
 
         ff_layer = self.ffn(out1)
         ff_layer = self.ff_dropout(ff_layer, training=training)
         out2 = self.ff_normalize(out1 + ff_layer)
-        
+
         return out2
+
 
 class TransformerDecoderBlock(layers.Layer):
     """Decoder block that uses masked attention (look-ahead masks and padding mask)."""
+
     def __init__(self, d_model, n_heads, ff_dim, dropout=0.1, **kwargs):
         super().__init__()
 
@@ -248,15 +281,20 @@ class TransformerDecoderBlock(layers.Layer):
     @staticmethod
     def point_wise_feed_forward_network(d_model, dff):
         """Simple feed forward network."""
-        return tf.keras.Sequential([
-            layers.Dense(dff, activation='relu'),  # (batch_size, seq_len, dff)
-            layers.Dense(d_model)  # (batch_size, seq_len, d_model)
-        ])
-
+        return tf.keras.Sequential(
+            [
+                layers.Dense(dff, activation="relu"),  # (batch_size, seq_len, dff)
+                layers.Dense(d_model),  # (batch_size, seq_len, d_model)
+            ]
+        )
 
     def build(self, input_shape):
-        self.attn_multi1 = layers.MultiHeadAttention(self.n_heads, self.d_model, dropout=self.dropout_rate)
-        self.attn_multi2 = layers.MultiHeadAttention(self.n_heads, self.d_model, dropout=self.dropout_rate)
+        self.attn_multi1 = layers.MultiHeadAttention(
+            self.n_heads, self.d_model, dropout=self.dropout_rate
+        )
+        self.attn_multi2 = layers.MultiHeadAttention(
+            self.n_heads, self.d_model, dropout=self.dropout_rate
+        )
 
         self.ffn = self.point_wise_feed_forward_network(self.d_model, self.ff_dim)
 
@@ -269,13 +307,25 @@ class TransformerDecoderBlock(layers.Layer):
         self.normalize3 = layers.LayerNormalization(epsilon=1e-6)
 
     def call(self, target, enc_output, lookahead_mask, padding_mask, training):
-        attn1, attn_scores1 = self.attn_multi1(target, target, target,
-                                               lookahead_mask, return_attention_scores=True, training=training)
+        attn1, attn_scores1 = self.attn_multi1(
+            target,
+            target,
+            target,
+            lookahead_mask,
+            return_attention_scores=True,
+            training=training,
+        )
         attn1 = self.dropout1(attn1, training=training)
         out1 = self.normalize1(attn1 + target)
 
-        attn2, attn_scores2 = self.attn_multi2(out1, enc_output, enc_output,
-                                               padding_mask, return_attention_scores=True, training=training)
+        attn2, attn_scores2 = self.attn_multi2(
+            out1,
+            enc_output,
+            enc_output,
+            padding_mask,
+            return_attention_scores=True,
+            training=training,
+        )
         attn2 = self.dropout2(attn2, training=training)
         out2 = self.normalize2(attn2 + out1)
 
@@ -288,6 +338,7 @@ class TransformerDecoderBlock(layers.Layer):
 
 class CreatePatches(layers.Layer):
     """Split spectrogram into same width patches. No overlap currently"""
+
     def __init__(self, patch_width):
         super().__init__()
         self.patch_width = patch_width
@@ -299,51 +350,56 @@ class CreatePatches(layers.Layer):
 
         patches = tf.image.extract_patches(
             images=images,
-            sizes=[1,self.patch_width, patch_height, 1],
-            strides=[1,self.patch_width, patch_height, 1],
+            sizes=[1, self.patch_width, patch_height, 1],
+            strides=[1, self.patch_width, patch_height, 1],
             rates=[1, 1, 1, 1],
             padding="VALID",
         )
 
-        patches = tf.reshape(patches, [batch_size,
-                                       -1,
-                                       self.patch_width,
-                                       patch_height,
-                                       1,
-                                       ])
+        patches = tf.reshape(
+            patches,
+            [
+                batch_size,
+                -1,
+                self.patch_width,
+                patch_height,
+                1,
+            ],
+        )
 
         # Shape (batch, seq, height, width)
         return patches
 
+
 class PatchEncoder(layers.Layer):
     """Given a sequence of patches, encode each patch individually with convolution stack"""
+
     def __init__(self):
         super().__init__()
-        self.patch_conv1 = tf.keras.layers.Conv2D(
-            2, (5,3), (2,2), activation='relu')
-        self.patch_conv2 = tf.keras.layers.Conv2D(
-            4, (5,3), (2,2), activation='relu')
-        self.patch_conv3 = tf.keras.layers.Conv2D(
-            16, (5,3), (2,2), activation='relu')
+        self.patch_conv1 = tf.keras.layers.Conv2D(2, (5, 3), (2, 2), activation="relu")
+        self.patch_conv2 = tf.keras.layers.Conv2D(4, (5, 3), (2, 2), activation="relu")
+        self.patch_conv3 = tf.keras.layers.Conv2D(16, (5, 3), (2, 2), activation="relu")
 
     def call(self, patches):
         """Encode patches of shape (batch, seq, height, width, channel)"""
         # Swap batch and seq dims
-        patches = tf.transpose(patches, [1,0,2,3,4])
+        patches = tf.transpose(patches, [1, 0, 2, 3, 4])
         # Run each conv on each sequence elemnent
         out = tf.map_fn(self.patch_conv1, patches)
         out = tf.map_fn(self.patch_conv2, out)
         out = tf.map_fn(self.patch_conv3, out)
         # Flatten into feature vectors
-        features = tf.transpose(out, [1,0,2,3,4])
+        features = tf.transpose(out, [1, 0, 2, 3, 4])
         features = tf.reshape(features, (features.shape[0], features.shape[1], -1))
 
         return features
+
 
 class RelativePositionEmbedding(layers.Layer):
     """Provides the transformer with sequence
     order information, which is important because without recurrent
     networks, this information is lost."""
+
     def __init__(self, hidden_size, min_timescale=1.0, max_timescale=1.0e4, **kwargs):
         super().__init__(**kwargs)
         self._hidden_size = hidden_size
@@ -357,14 +413,18 @@ class RelativePositionEmbedding(layers.Layer):
         position = tf.cast(tf.range(length), tf.float32)
         num_timescales = self._hidden_size // 2
         min_timescale, max_timescale = self._min_timescale, self._max_timescale
-        log_timescale_increment = (tf.math.log(float(max_timescale) / float(min_timescale)) /
-                                   (tf.cast(num_timescales, tf.float32) - 1))
-        
-        inv_timescales = min_timescale * tf.exp(tf.cast(tf.range(num_timescales), tf.float32) *
-                                                -log_timescale_increment)
-        
+        log_timescale_increment = tf.math.log(
+            float(max_timescale) / float(min_timescale)
+        ) / (tf.cast(num_timescales, tf.float32) - 1)
+
+        inv_timescales = min_timescale * tf.exp(
+            tf.cast(tf.range(num_timescales), tf.float32) * -log_timescale_increment
+        )
+
         scaled_time = tf.expand_dims(position, 1) * tf.expand_dims(inv_timescales, 0)
-        
-        position_embeddings = tf.concat([tf.sin(scaled_time), tf.cos(scaled_time)], axis=1)
+
+        position_embeddings = tf.concat(
+            [tf.sin(scaled_time), tf.cos(scaled_time)], axis=1
+        )
 
         return position_embeddings

@@ -1,5 +1,6 @@
-from collections import defaultdict, Counter   
+from collections import Counter
 import itertools
+
 
 class Vocab:
     def __init__(self):
@@ -26,7 +27,7 @@ class Vocab:
         word_freqs = Counter(w for s in tokens for w in s)
         word_freqs = sorted(((f, w) for w, f in word_freqs.items()), reverse=True)
         self.itos = self.dummies + [w for _, w in word_freqs]
-        self.stoi = {w:i for i, w in enumerate(self.itos)}
+        self.stoi = {w: i for i, w in enumerate(self.itos)}
 
     def encode_sentence(self, sentence):
         tokens = self.tokenize(sentence)
@@ -37,7 +38,7 @@ class Vocab:
         return [bos] + [self.stoi.get(w.lower(), unk) for w in tokens] + [eos]
 
     def encode_docs(self, docs):
-        encoded = [self.encode_sentence(s) for s in docs] 
+        encoded = [self.encode_sentence(s) for s in docs]
         pad_token = self.stoi[self.PAD]
         padded = list(zip(*itertools.zip_longest(*encoded, fillvalue=pad_token)))
 
@@ -55,4 +56,3 @@ class Vocab:
 
     def decode_docs(self, docs):
         return [self.decode_tokens(d) for d in docs]
-
